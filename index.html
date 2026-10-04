@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="ru">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="theme-color" content="#edf0eb">
+	<title>Тренировка · Таймер</title>
+	<style>
+		:root {
+			color-scheme: light;
+			--ink: #19231e;
+			--muted: #69756e;
+			--paper: #edf0eb;
+			--panel: #f8f9f6;
+			--line: #d9dfd8;
+			--lime: #d8ff53;
+			--green: #477b5f;
+			--coral: #dd7056;
+			--ring-color: var(--lime);
+		}
+
+		* { box-sizing: border-box; }
+
+		body {
+			min-width: 0;
+			min-height: 100vh;
+			margin: 0;
+			background: var(--paper);
+			color: var(--ink);
+			font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+		}
+
+		button { font: inherit; }
+
+		.shell {
+			width: min(1160px, calc(100% - 56px));
+			margin: 0 auto;
+			padding: 32px 0 40px;
+		}
+
+		.topbar {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding-bottom: 26px;
+			border-bottom: 1px solid var(--line);
+		}
+
+		.brand {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			font-size: 14px;
+			font-weight: 750;
+			letter-spacing: 0;
+		}
+
+		.brand-mark {
+			display: grid;
+			width: 34px;
+			height: 34px;
+			place-items: center;
+			background: var(--lime);
+			border-radius: 11px;
+			font-size: 17px;
+		}
+
+		.session-label {
+			color: var(--muted);
+			font-size: 12px;
+			font-weight: 650;
+			text-transform: uppercase;
+		}
+
+		.header-actions { display: flex; align-items: center; gap: 14px; }
+
+		.sound-control {
+			display: grid;
+			width: 40px;
+			aspect-ratio: 1;
+			place-items: center;
+			padding: 0;
+			border: 0;
+			border-radius: 50%;
+			background: #dfe5dc;
+			color: var(--ink);
+			cursor: pointer;
+		}
+
+		.sound-control:hover { background: #d3dbd1; }
+		.sound-control:focus-visible { outline: 3px solid #7c9c47; outline-offset: 3px; }
+		.sound-control svg { width: 19px; height: 19px; }
+		.sound-control .muted-mark { display: none; }
+		.sound-control .tick-muted-mark { display: none; }
+		.sound-control[aria-pressed="false"] .sound-waves { display: none; }
+		.sound-control[aria-pressed="false"] .muted-mark { display: block; }
+		#tick-button[aria-pressed="false"] .tick-muted-mark { display: block; }
+		#tick-button[aria-pressed="false"] .clock-hands { opacity: 0.35; }
+
+		main {
+			display: grid;
+			grid-template-columns: minmax(0, 1.15fr) minmax(330px, 0.85fr);
+			gap: 54px;
+			padding-top: 48px;
+		}
+
+		.timer-column { display: flex; flex-direction: column; align-items: center; }
+
+		.eyebrow {
+			align-self: flex-start;
+			margin: 0 0 27px;
+			color: var(--muted);
+			font-size: 12px;
+			font-weight: 750;
+			letter-spacing: 0;
+			text-transform: uppercase;
+		}
+
+		.round-number { color: var(--ink); }
+
+		.dial {
+			position: relative;
+			display: grid;
+			width: min(390px, 78vw);
+			aspect-ratio: 1;
+			place-items: center;
+			margin-top: 4px;
+		}
+
+		.dial svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+		.dial-track { fill: none; stroke: #dce2d9; stroke-width: 7; }
+		.dial-progress {
+			fill: none;
+			stroke: var(--ring-color);
+			stroke-linecap: round;
+			stroke-width: 7;
+			stroke-dasharray: 879.65;
+			stroke-dashoffset: 0;
+			transition: stroke-dashoffset 0.35s linear, stroke 0.25s ease;
+		}
+
+		.dial-center { display: flex; flex-direction: column; align-items: center; text-align: center; }
+
+		.phase-label {
+			margin-bottom: 10px;
+			color: var(--muted);
+			font-size: 12px;
+			font-weight: 750;
+			letter-spacing: 0;
+			text-transform: uppercase;
+		}
+
+		.time {
+			font-size: clamp(68px, 9vw, 98px);
+			font-weight: 650;
+			font-variant-numeric: tabular-nums;
+			letter-spacing: 0;
+			line-height: 1;
+		}
+
+		.movement {
+			min-height: 34px;
+			margin-top: 15px;
+			font-family: Georgia, "Times New Roman", serif;
+			font-size: 25px;
+		}
+
+		.controls { display: flex; align-items: center; gap: 14px; margin-top: 32px; }
+
+		.control {
+			display: inline-flex;
+			min-height: 54px;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+			padding: 0 24px;
+			border: 0;
+			border-radius: 99px;
+			cursor: pointer;
+			font-weight: 750;
+			transition: transform 0.16s ease, background 0.16s ease;
+		}
+
+		.control:hover { transform: translateY(-2px); }
+		.control:focus-visible, .icon-control:focus-visible { outline: 3px solid #7c9c47; outline-offset: 3px; }
+		.control-primary { min-width: 158px; background: var(--ink); color: white; }
+		.control-primary:hover { background: #304239; }
+		.control-secondary { min-width: 54px; padding: 0; background: #dfe5dc; color: var(--ink); }
+		.control-secondary:hover { background: #d3dbd1; }
+		.control-symbol { font-size: 18px; line-height: 1; }
+
+		.totals {
+			display: flex;
+			gap: 30px;
+			align-self: center;
+			margin-top: 27px;
+			color: var(--muted);
+			font-size: 12px;
+		}
+
+		.totals strong { display: block; margin-top: 5px; color: var(--ink); font-size: 15px; font-variant-numeric: tabular-nums; }
+
+		.routine { padding-top: 4px; }
+
+		.routine-header {
+			display: flex;
+			align-items: baseline;
+			justify-content: space-between;
+			margin-bottom: 16px;
+		}
+
+		h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 30px; font-weight: 500; }
+		.routine-duration { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+		.round-block { margin-bottom: 23px; }
+
+		.round-heading {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			padding: 13px 0 10px;
+			border-bottom: 1px solid var(--line);
+			color: var(--muted);
+			font-size: 11px;
+			font-weight: 750;
+			letter-spacing: 0;
+			text-transform: uppercase;
+		}
+
+		.round-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+		.exercise-list { list-style: none; margin: 0; padding: 0; }
+
+		.exercise-row {
+			display: grid;
+			grid-template-columns: 29px minmax(0, 1fr) auto;
+			align-items: center;
+			min-height: 54px;
+			border-bottom: 1px solid #e0e5de;
+			color: #66736b;
+			transition: color 0.2s ease;
+		}
+
+		.exercise-row.active { color: var(--ink); }
+		.exercise-row.done { color: #849087; }
+		.exercise-index { font-size: 11px; font-variant-numeric: tabular-nums; }
+		.exercise-name { font-size: 15px; font-weight: 650; }
+		.exercise-meta { color: #879188; font-size: 11px; font-variant-numeric: tabular-nums; }
+
+		.between-rounds {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 14px 13px;
+			border-radius: 10px;
+			background: #e1e7df;
+			color: #57665b;
+			font-size: 12px;
+			font-weight: 650;
+		}
+
+		.between-rounds time { color: var(--ink); font-variant-numeric: tabular-nums; }
+		.complete .dial-progress { stroke: var(--green); }
+
+		@media (min-width: 701px) and (max-width: 900px) {
+			.shell { width: calc(100% - 48px); padding-top: 24px; }
+			main { grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.92fr); gap: 28px; padding-top: 36px; }
+			.dial { width: min(350px, 100%); }
+			.time { font-size: clamp(70px, 8vw, 82px); }
+			.controls { gap: 10px; }
+			.control-primary { min-width: 140px; padding: 0 18px; }
+		}
+
+		@media (max-width: 700px) {
+			.shell { width: min(100% - 36px, 560px); padding-top: 18px; }
+			.topbar { padding-bottom: 17px; }
+			main { grid-template-columns: 1fr; gap: 47px; padding-top: 31px; }
+			.timer-column { width: 100%; }
+			.eyebrow { align-self: center; margin-bottom: 19px; }
+			.dial { width: min(330px, 78vw); }
+			.time { font-size: clamp(68px, 19vw, 88px); }
+			.routine { padding-bottom: 20px; }
+			h1 { font-size: 27px; }
+		}
+
+		@media (max-width: 400px) {
+			.shell { width: calc(100% - 24px); }
+			.header-actions { gap: 8px; }
+			.session-label { display: none; }
+			.controls { width: 100%; gap: 8px; }
+			.control { min-height: 50px; }
+			.control-primary { min-width: 0; flex: 1; padding: 0 8px; }
+			.control-secondary { min-width: 42px; flex: 0 0 42px; }
+			.control-symbol { font-size: 16px; }
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			*, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+		}
+	</style>
+</head>
+<body>
+	<div class="shell">
+		<header class="topbar">
+			<div class="brand"><span class="brand-mark" aria-hidden="true">↗</span><span>ДВИЖЕНИЕ</span></div>
+			<div class="header-actions">
+				<div class="session-label">Интервальная тренировка</div>
+				<button class="sound-control" id="sound-button" type="button" aria-label="Выключить звук" title="Выключить звук" aria-pressed="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M11 5 6 9H3v6h3l5 4z"></path>
+						<g class="sound-waves"><path d="M15.5 8.5a5 5 0 0 1 0 7"></path><path d="M18.5 5.5a9 9 0 0 1 0 13"></path></g>
+						<path class="muted-mark" d="m16 9 5 6m0-6-5 6"></path>
+					</svg>
+				</button>
+				<button class="sound-control" id="tick-button" type="button" aria-label="Выключить тиканье" title="Выключить тиканье" aria-pressed="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<circle cx="12" cy="13" r="8"></circle>
+						<path class="clock-hands" d="M12 8v5l3 2"></path>
+						<path class="tick-muted-mark" d="m5 5 14 14"></path>
+					</svg>
+				</button>
+			</div>
+		</header>
+
+		<main>
+			<section class="timer-column" aria-label="Таймер тренировки">
+				<p class="eyebrow">Круг <span class="round-number" id="round-number">1</span> <span aria-hidden="true">·</span> <span id="exercise-position">1 из 4</span></p>
+				<div class="dial" id="dial">
+					<svg viewBox="0 0 300 300" aria-hidden="true">
+						<circle class="dial-track" cx="150" cy="150" r="140"></circle>
+						<circle class="dial-progress" id="dial-progress" cx="150" cy="150" r="140"></circle>
+					</svg>
+					<div class="dial-center" aria-live="polite">
+						<div class="phase-label" id="phase-label">Работа</div>
+						<div class="time" id="time-display">00:30</div>
+						<div class="movement" id="movement-name">Отжимание</div>
+					</div>
+				</div>
+				<div class="controls">
+					<button class="control control-secondary" id="reset-button" type="button" aria-label="Сбросить таймер" title="Сбросить таймер"><span class="control-symbol" aria-hidden="true">↺</span></button>
+					<button class="control control-primary" id="toggle-button" type="button"><span class="control-symbol" id="toggle-symbol" aria-hidden="true">▶</span><span id="toggle-label">Начать</span></button>
+					<button class="control control-secondary" id="skip-button" type="button" aria-label="Следующий этап" title="Следующий этап"><span class="control-symbol" aria-hidden="true">↠</span></button>
+				</div>
+				<div class="totals" aria-label="Сводка тренировки">
+					<div>Осталось<strong id="remaining-time">15:00</strong></div>
+					<div>Всего<strong>17:05</strong></div>
+				</div>
+			</section>
+
+			<section class="routine" aria-label="План тренировки">
+				<div class="routine-header">
+					<h1>План</h1>
+					<span class="routine-duration">17 минут 05 сек</span>
+				</div>
+				<div id="rounds-list"></div>
+				<div class="between-rounds"><span>Отдых между кругами</span><time>03:00</time></div>
+			</section>
+		</main>
+	</div>
+
+	<script>
+		const exercises = ["Отжимание", "Присед", "Книжка", "Выброс ног назад"];
+		const phases = [
+			{ name: "Работа", duration: 30, color: "#d8ff53" },
+			{ name: "Удержание", duration: 15, color: "#dd7056" },
+			{ name: "Отдых", duration: 60, color: "#85a994" }
+		];
+		const sequence = [];
+
+		for (let round = 1; round <= 2; round += 1) {
+			exercises.forEach((exercise, exerciseIndex) => {
+				phases.forEach((phase) => sequence.push({ ...phase, exercise, exerciseIndex, round }));
+			});
+			if (round === 1) sequence.push({ name: "Отдых между кругами", duration: 180, color: "#aab8ac", exercise: "", exerciseIndex: -1, round: 1 });
+		}
+
+		const PREPARATION_DURATION = 5;
+		const totalDuration = sequence.reduce((total, phase) => total + phase.duration, 0);
+		const timerDisplay = document.getElementById("time-display");
+		const progressRing = document.getElementById("dial-progress");
+		const toggleButton = document.getElementById("toggle-button");
+		const toggleLabel = document.getElementById("toggle-label");
+		const toggleSymbol = document.getElementById("toggle-symbol");
+		const soundButton = document.getElementById("sound-button");
+		const tickButton = document.getElementById("tick-button");
+		let phaseIndex = 0;
+		let remaining = sequence[0].duration;
+		let running = false;
+		let preparing = false;
+		let hasStartedWorkout = false;
+		let soundEnabled = true;
+		let tickingEnabled = true;
+		let audioContext = null;
+		let deadline = 0;
+		let intervalId = null;
+
+		function formatTime(seconds) {
+			const minutes = Math.floor(seconds / 60).toString().padStart(2, "0");
+			const remainder = Math.floor(seconds % 60).toString().padStart(2, "0");
+			return `${minutes}:${remainder}`;
+		}
+
+		function elapsedBefore(index) {
+			return sequence.slice(0, index).reduce((total, phase) => total + phase.duration, 0);
+		}
+
+		function playTone(frequency, duration = 0.12, volume = 0.12) {
+			if (!soundEnabled) return;
+			const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+			if (!AudioContextConstructor) return;
+			audioContext ??= new AudioContextConstructor();
+			if (audioContext.state === "suspended") audioContext.resume();
+			const oscillator = audioContext.createOscillator();
+			const gain = audioContext.createGain();
+			const startAt = audioContext.currentTime;
+			oscillator.type = "sine";
+			oscillator.frequency.setValueAtTime(frequency, startAt);
+			gain.gain.setValueAtTime(0.0001, startAt);
+			gain.gain.exponentialRampToValueAtTime(volume, startAt + 0.015);
+			gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+			oscillator.connect(gain);
+			gain.connect(audioContext.destination);
+			oscillator.start(startAt);
+			oscillator.stop(startAt + duration);
+		}
+
+		function playTick(secondsRemaining) {
+			if (!tickingEnabled) return;
+			const finalSeconds = secondsRemaining <= 5;
+			playTone(finalSeconds ? 1380 : 1100, 0.045, finalSeconds ? 0.2 : 0.045);
+		}
+
+		function playPhaseTick(secondsRemaining) {
+			const phase = sequence[phaseIndex];
+			const isRest = phase.name === "Отдых" || phase.name === "Отдых между кругами";
+			if (!isRest || secondsRemaining <= 5) playTick(secondsRemaining);
+		}
+
+		function playPhaseTone(phase) {
+			if (phase.name === "Работа") playTone(880, 0.2);
+			else if (phase.name === "Удержание") playTone(660);
+			else if (phase.name === "Отдых") playTone(440);
+		}
+
+		function render() {
+			const phase = sequence[phaseIndex];
+			const elapsed = preparing ? 0 : elapsedBefore(phaseIndex) + phase.duration - remaining;
+			const totalRemaining = preparing || !hasStartedWorkout ? totalDuration + (preparing ? remaining : PREPARATION_DURATION) : Math.max(0, totalDuration - elapsed);
+			document.getElementById("round-number").textContent = preparing ? "1" : phase.round;
+			document.getElementById("exercise-position").textContent = preparing ? "старт скоро" : phase.exerciseIndex < 0 ? "пауза" : `${phase.exerciseIndex + 1} из 4`;
+			document.getElementById("phase-label").textContent = preparing ? "Приготовься" : phase.name;
+			document.getElementById("movement-name").textContent = preparing ? "Старт через" : phase.exercise || "Восстановись";
+			timerDisplay.textContent = formatTime(remaining);
+			document.getElementById("remaining-time").textContent = formatTime(totalRemaining);
+			document.documentElement.style.setProperty("--ring-color", preparing ? "#dd7056" : phase.color);
+			progressRing.style.strokeDashoffset = `${879.65 * (1 - remaining / (preparing ? PREPARATION_DURATION : phase.duration))}`;
+			toggleLabel.textContent = running ? "Пауза" : "Продолжить";
+			toggleSymbol.textContent = running ? "Ⅱ" : "▶";
+			if (!running && !hasStartedWorkout && !preparing) toggleLabel.textContent = "Начать";
+			document.getElementById("dial").classList.toggle("complete", !preparing && phaseIndex === sequence.length - 1 && remaining === 0);
+
+			document.querySelectorAll(".exercise-row").forEach((row) => {
+				const rowRound = Number(row.dataset.round);
+				const rowExercise = Number(row.dataset.exercise);
+				const current = rowRound === phase.round && rowExercise === phase.exerciseIndex;
+				const finished = rowRound < phase.round || (rowRound === phase.round && rowExercise < phase.exerciseIndex);
+				row.classList.toggle("active", current);
+				row.classList.toggle("done", finished);
+				row.setAttribute("aria-current", current ? "step" : "false");
+			});
+		}
+
+		function finish() {
+			running = false;
+			preparing = false;
+			clearInterval(intervalId);
+			intervalId = null;
+			render();
+			toggleLabel.textContent = "Готово";
+			toggleButton.disabled = true;
+			toggleButton.style.opacity = "0.65";
+			playTone(1040, 0.35);
+		}
+
+		function advance() {
+			if (phaseIndex >= sequence.length - 1) {
+				remaining = 0;
+				finish();
+				return;
+			}
+			phaseIndex += 1;
+			remaining = sequence[phaseIndex].duration;
+			deadline = Date.now() + remaining * 1000;
+			playPhaseTone(sequence[phaseIndex]);
+		}
+
+		function tick() {
+			const nextRemaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+			if (preparing) {
+				if (nextRemaining > 0 && nextRemaining < remaining) playTick(nextRemaining);
+				remaining = nextRemaining;
+				if (remaining === 0) {
+					preparing = false;
+					hasStartedWorkout = true;
+					phaseIndex = 0;
+					remaining = sequence[0].duration;
+					deadline = Date.now() + remaining * 1000;
+					playTone(920, 0.25);
+				}
+			} else {
+				if (nextRemaining > 0 && nextRemaining < remaining) playPhaseTick(nextRemaining);
+				remaining = nextRemaining;
+				if (remaining === 0) advance();
+			}
+			render();
+		}
+
+		function setRunning(nextRunning) {
+			if (phaseIndex === sequence.length - 1 && remaining === 0) return;
+			running = nextRunning;
+			clearInterval(intervalId);
+			intervalId = null;
+			if (running) {
+				if (!hasStartedWorkout && !preparing) {
+					preparing = true;
+					remaining = PREPARATION_DURATION;
+					playTone(520, 0.08);
+				}
+				deadline = Date.now() + remaining * 1000;
+				intervalId = window.setInterval(tick, 200);
+			}
+			render();
+		}
+
+		document.getElementById("toggle-button").addEventListener("click", () => setRunning(!running));
+		document.getElementById("reset-button").addEventListener("click", () => {
+			clearInterval(intervalId);
+			intervalId = null;
+			phaseIndex = 0;
+			remaining = sequence[0].duration;
+			running = false;
+			preparing = false;
+			hasStartedWorkout = false;
+			toggleButton.disabled = false;
+			toggleButton.style.opacity = "1";
+			render();
+		});
+		document.getElementById("skip-button").addEventListener("click", () => {
+			if (preparing) {
+				preparing = false;
+				hasStartedWorkout = true;
+				phaseIndex = 0;
+				remaining = sequence[0].duration;
+				playTone(920, 0.25);
+			} else if (phaseIndex >= sequence.length - 1) {
+				remaining = 0;
+				finish();
+				return;
+			} else {
+			advance();
+			}
+			if (running) deadline = Date.now() + remaining * 1000;
+			render();
+		});
+		soundButton.addEventListener("click", () => {
+			soundEnabled = !soundEnabled;
+			soundButton.setAttribute("aria-pressed", String(soundEnabled));
+			soundButton.setAttribute("aria-label", soundEnabled ? "Выключить звук" : "Включить звук");
+			soundButton.title = soundEnabled ? "Выключить звук" : "Включить звук";
+			if (soundEnabled) playTone(660, 0.1);
+		});
+		tickButton.addEventListener("click", () => {
+			tickingEnabled = !tickingEnabled;
+			tickButton.setAttribute("aria-pressed", String(tickingEnabled));
+			tickButton.setAttribute("aria-label", tickingEnabled ? "Выключить тиканье" : "Включить тиканье");
+			tickButton.title = tickingEnabled ? "Выключить тиканье" : "Включить тиканье";
+			if (tickingEnabled) playTick(30);
+		});
+
+		const roundsList = document.getElementById("rounds-list");
+		for (let round = 1; round <= 2; round += 1) {
+			const block = document.createElement("section");
+			block.className = "round-block";
+			block.innerHTML = `<div class="round-heading"><span class="round-dot"></span>Круг ${round}</div><ol class="exercise-list"></ol>`;
+			const list = block.querySelector("ol");
+			exercises.forEach((exercise, exerciseIndex) => {
+				const item = document.createElement("li");
+				item.className = "exercise-row";
+				item.dataset.round = round;
+				item.dataset.exercise = exerciseIndex;
+				item.innerHTML = `<span class="exercise-index">0${exerciseIndex + 1}</span><span class="exercise-name"></span><span class="exercise-meta">30 · 15 · 60 сек</span>`;
+				item.querySelector(".exercise-name").textContent = exercise;
+				list.append(item);
+			});
+			roundsList.append(block);
+		}
+		render();
+	</script>
+</body>
+</html>
